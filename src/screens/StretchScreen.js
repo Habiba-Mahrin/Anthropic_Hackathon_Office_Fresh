@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { analyzePose } from '../utils/geminiService';
+import { analyzePose } from '../utils/visionService';
 
 const { width, height } = Dimensions.get('window');
 

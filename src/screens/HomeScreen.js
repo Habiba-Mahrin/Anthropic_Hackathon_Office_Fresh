@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { colors, typography, spacing, borderRadius, shadows } from '../utils/theme';
 
 export default function HomeScreen({ navigation }) {
   const [isEnabled, setIsEnabled] = useState(false);
-  const [interval, setInterval] = useState(30); // minutes
+  const [interval, setInterval] = useState(30);
 
   useEffect(() => {
     requestPermissions();
@@ -42,38 +43,78 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>OfficeFresh</Text>
-      <Text style={styles.subtitle}>Combat office syndrome with guided stretches</Text>
+      <View style={styles.header}>
+        <Text style={styles.greeting}>Hi there,</Text>
+        <Text style={styles.title}>Ready to Refresh?</Text>
+        <Text style={styles.subtitle}>Take care of your body with mindful stretches</Text>
+      </View>
 
       <View style={styles.card}>
-        <View style={styles.row}>
-          <Text style={styles.label}>Stretch Reminders</Text>
+        <View style={styles.cardHeader}>
+          <View style={styles.iconCircle}>
+            <Text style={styles.icon}>🔔</Text>
+          </View>
+          <View style={styles.cardTitleContainer}>
+            <Text style={styles.cardTitle}>Stretch Reminders</Text>
+            <Text style={styles.cardSubtitle}>Every {interval} minutes</Text>
+          </View>
           <Switch
-            trackColor={{ false: '#767577', true: '#81b0ff' }}
-            thumbColor={isEnabled ? '#2196F3' : '#f4f3f4'}
+            trackColor={{ false: colors.border, true: colors.secondaryLight }}
+            thumbColor={isEnabled ? colors.secondary : colors.surface}
             onValueChange={toggleReminders}
             value={isEnabled}
           />
         </View>
 
-        <Text style={styles.intervalText}>
-          Reminder every {interval} minutes
-        </Text>
+        {isEnabled && (
+          <View style={styles.activeIndicator}>
+            <View style={styles.activeDot} />
+            <Text style={styles.activeText}>Active - Next reminder in {interval} min</Text>
+          </View>
+        )}
       </View>
 
       <TouchableOpacity
-        style={styles.button}
+        style={styles.primaryButton}
         onPress={() => navigation.navigate('Stretch')}
+        activeOpacity={0.8}
       >
-        <Text style={styles.buttonText}>Start Stretch Now</Text>
+        <Text style={styles.primaryButtonText}>Start Stretch Now</Text>
+        <Text style={styles.buttonArrow}>→</Text>
       </TouchableOpacity>
 
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>How it works:</Text>
-        <Text style={styles.infoText}>1. Enable reminders above</Text>
-        <Text style={styles.infoText}>2. Get notified when it's time to stretch</Text>
-        <Text style={styles.infoText}>3. Follow the video guide</Text>
-        <Text style={styles.infoText}>4. Stay in position until the screen turns green</Text>
+      <View style={styles.infoSection}>
+        <Text style={styles.sectionTitle}>How it works</Text>
+
+        <View style={styles.stepCard}>
+          <View style={styles.stepNumber}>
+            <Text style={styles.stepNumberText}>1</Text>
+          </View>
+          <View style={styles.stepContent}>
+            <Text style={styles.stepTitle}>Enable reminders</Text>
+            <Text style={styles.stepText}>Get gentle nudges to take breaks</Text>
+          </View>
+        </View>
+
+        <View style={styles.stepCard}>
+          <View style={styles.stepNumber}>
+            <Text style={styles.stepNumberText}>2</Text>
+          </View>
+          <View style={styles.stepContent}>
+            <Text style={styles.stepTitle}>Follow the guide</Text>
+            <Text style={styles.stepText}>AI watches and guides your form</Text>
+          </View>
+        </View>
+
+        <View style={styles.stepCard}>
+          <View style={styles.stepNumber}>
+            <Text style={styles.stepNumberText}>3</Text>
+          </View>
+          <View style={styles.stepContent}>
+            <Text style={styles.stepTitle}>Hold the position</Text>
+            <Text style={styles.stepText}>Screen turns green when you're doing it right</Text>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -82,74 +123,152 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 20,
+    backgroundColor: colors.background,
+  },
+  header: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing['2xl'] + 30,
+    paddingBottom: spacing.xl,
+  },
+  greeting: {
+    fontSize: typography.fontSizes.lg,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
   },
   title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#2196F3',
-    marginTop: 60,
-    marginBottom: 10,
+    fontSize: typography.fontSizes['4xl'],
+    fontWeight: typography.fontWeights.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 40,
+    fontSize: typography.fontSizes.base,
+    color: colors.textSecondary,
+    lineHeight: 24,
   },
   card: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    ...shadows.md,
   },
-  row: {
+  cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
   },
-  label: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  intervalText: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 10,
-  },
-  button: {
-    backgroundColor: '#2196F3',
-    borderRadius: 25,
-    padding: 18,
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
+    marginRight: spacing.md,
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
+  icon: {
+    fontSize: 24,
   },
-  infoCard: {
-    backgroundColor: '#e3f2fd',
-    borderRadius: 15,
-    padding: 20,
+  cardTitleContainer: {
+    flex: 1,
   },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1976D2',
-    marginBottom: 15,
+  cardTitle: {
+    fontSize: typography.fontSizes.lg,
+    fontWeight: typography.fontWeights.semibold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs / 2,
   },
-  infoText: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 8,
+  cardSubtitle: {
+    fontSize: typography.fontSizes.sm,
+    color: colors.textSecondary,
+  },
+  activeIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+  },
+  activeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.success,
+    marginRight: spacing.sm,
+  },
+  activeText: {
+    fontSize: typography.fontSizes.sm,
+    color: colors.success,
+    fontWeight: typography.fontWeights.medium,
+  },
+  primaryButton: {
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.md,
+  },
+  primaryButtonText: {
+    color: colors.textWhite,
+    fontSize: typography.fontSizes.lg,
+    fontWeight: typography.fontWeights.semibold,
+    marginRight: spacing.sm,
+  },
+  buttonArrow: {
+    color: colors.textWhite,
+    fontSize: typography.fontSizes.xl,
+    fontWeight: typography.fontWeights.semibold,
+  },
+  infoSection: {
+    paddingHorizontal: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: typography.fontSizes.xl,
+    fontWeight: typography.fontWeights.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  stepCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    ...shadows.sm,
+  },
+  stepNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.secondaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  stepNumberText: {
+    fontSize: typography.fontSizes.base,
+    fontWeight: typography.fontWeights.bold,
+    color: colors.secondary,
+  },
+  stepContent: {
+    flex: 1,
+  },
+  stepTitle: {
+    fontSize: typography.fontSizes.base,
+    fontWeight: typography.fontWeights.semibold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs / 2,
+  },
+  stepText: {
+    fontSize: typography.fontSizes.sm,
+    color: colors.textSecondary,
+    lineHeight: 20,
   },
 });
