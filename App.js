@@ -1,11 +1,15 @@
 import { useEffect, useRef } from 'react';
+import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as Notifications from 'expo-notifications';
 import HomeScreen from './src/screens/HomeScreen';
 import StretchScreen from './src/screens/StretchScreen';
+import WellnessInfoScreen from './src/screens/WellnessInfoScreen';
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
 // Configure how notifications should be handled when app is in foreground
 Notifications.setNotificationHandler({
@@ -16,6 +20,33 @@ Notifications.setNotificationHandler({
   }),
 });
 
+function StretchingStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#2196F3',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Stack.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Stretch"
+        component={StretchScreen}
+        options={{ title: 'Stretch Exercise' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 export default function App() {
   const navigationRef = useRef();
 
@@ -24,7 +55,7 @@ export default function App() {
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const screen = response.notification.request.content.data.screen;
       if (screen && navigationRef.current) {
-        navigationRef.current.navigate(screen);
+        navigationRef.current.navigate('Stretching', { screen });
       }
     });
 
@@ -33,28 +64,44 @@ export default function App() {
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator
+      <Tab.Navigator
         screenOptions={{
-          headerStyle: {
-            backgroundColor: '#2196F3',
+          tabBarActiveTintColor: '#2196F3',
+          tabBarInactiveTintColor: '#666',
+          tabBarStyle: {
+            paddingBottom: 5,
+            paddingTop: 5,
+            height: 60,
           },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: '600',
           },
         }}
       >
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{ headerShown: false }}
+        <Tab.Screen
+          name="Stretching"
+          component={StretchingStack}
+          options={{
+            headerShown: false,
+            tabBarLabel: 'Stretching',
+            tabBarIcon: ({ color }) => <TabIcon icon="💪" color={color} />,
+          }}
         />
-        <Stack.Screen
-          name="Stretch"
-          component={StretchScreen}
-          options={{ title: 'Stretch Exercise' }}
+        <Tab.Screen
+          name="Wellness"
+          component={WellnessInfoScreen}
+          options={{
+            headerShown: false,
+            tabBarLabel: 'Wellness Info',
+            tabBarIcon: ({ color }) => <TabIcon icon="📚" color={color} />,
+          }}
         />
-      </Stack.Navigator>
+      </Tab.Navigator>
     </NavigationContainer>
   );
+}
+
+function TabIcon({ icon }) {
+  return <Text style={{ fontSize: 24 }}>{icon}</Text>;
 }
