@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as Notifications from 'expo-notifications';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import LandingScreen from './src/screens/LandingScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import StretchScreen from './src/screens/StretchScreen';
 import WellnessInfoScreen from './src/screens/WellnessInfoScreen';
@@ -47,6 +48,49 @@ function StretchingStack() {
   );
 }
 
+function MainAppTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        tabBarActiveTintColor: '#2196F3',
+        tabBarInactiveTintColor: '#666',
+        tabBarStyle: {
+          paddingBottom: 5,
+          paddingTop: 5,
+          height: 60,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Stretching"
+        component={StretchingStack}
+        options={{
+          headerShown: false,
+          tabBarLabel: 'Stretching',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="yoga" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Wellness"
+        component={WellnessInfoScreen}
+        options={{
+          headerShown: false,
+          tabBarLabel: 'Wellness Info',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="information-circle" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
 export default function App() {
   const navigationRef = useRef();
 
@@ -55,7 +99,7 @@ export default function App() {
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const screen = response.notification.request.content.data.screen;
       if (screen && navigationRef.current) {
-        navigationRef.current.navigate('Stretching', { screen });
+        navigationRef.current.navigate('MainApp', { screen: 'Stretching', params: { screen } });
       }
     });
 
@@ -64,44 +108,11 @@ export default function App() {
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <Tab.Navigator
-        screenOptions={{
-          tabBarActiveTintColor: '#2196F3',
-          tabBarInactiveTintColor: '#666',
-          tabBarStyle: {
-            paddingBottom: 5,
-            paddingTop: 5,
-            height: 60,
-          },
-          tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '600',
-          },
-        }}
-      >
-        <Tab.Screen
-          name="Stretching"
-          component={StretchingStack}
-          options={{
-            headerShown: false,
-            tabBarLabel: 'Stretching',
-            tabBarIcon: ({ color }) => <TabIcon icon="💪" color={color} />,
-          }}
-        />
-        <Tab.Screen
-          name="Wellness"
-          component={WellnessInfoScreen}
-          options={{
-            headerShown: false,
-            tabBarLabel: 'Wellness Info',
-            tabBarIcon: ({ color }) => <TabIcon icon="📚" color={color} />,
-          }}
-        />
-      </Tab.Navigator>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Landing" component={LandingScreen} />
+        <Stack.Screen name="MainApp" component={MainAppTabs} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
 
-function TabIcon({ icon }) {
-  return <Text style={{ fontSize: 24 }}>{icon}</Text>;
-}
