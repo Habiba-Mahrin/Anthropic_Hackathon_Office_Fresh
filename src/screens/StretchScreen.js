@@ -7,6 +7,8 @@ const { width, height } = Dimensions.get('window');
 
 export default function StretchScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
+  const [breathingPhase, setBreathingPhase] = useState(true);
+  const [breathCountdown, setBreathCountdown] = useState(3);
   const [isInPosition, setIsInPosition] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [exerciseComplete, setExerciseComplete] = useState(false);
@@ -14,6 +16,16 @@ export default function StretchScreen({ navigation }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const cameraRef = useRef(null);
   const analysisInterval = useRef(null);
+
+  // Handle breathing countdown
+  useEffect(() => {
+    if (breathingPhase && breathCountdown > 0) {
+      const timer = setTimeout(() => setBreathCountdown(breathCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (breathingPhase && breathCountdown === 0) {
+      setBreathingPhase(false);
+    }
+  }, [breathingPhase, breathCountdown]);
 
   useEffect(() => {
     if (isInPosition && countdown > 0) {
@@ -26,11 +38,11 @@ export default function StretchScreen({ navigation }) {
   }, [isInPosition, countdown]);
 
   useEffect(() => {
-    if (permission?.granted && !exerciseComplete) {
+    if (permission?.granted && !exerciseComplete && !breathingPhase) {
       startAnalysis();
     }
     return () => stopAnalysis();
-  }, [permission, exerciseComplete]);
+  }, [permission, exerciseComplete, breathingPhase]);
 
   const startAnalysis = () => {
     // Analyze every 3 seconds
@@ -100,14 +112,21 @@ export default function StretchScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.cameraContainer, { borderColor: isInPosition ? '#4CAF50' : '#f44336' }]}>
+      <View style={[styles.cameraContainer, { borderColor: breathingPhase ? '#2196F3' : (isInPosition ? '#4CAF50' : '#f44336') }]}>
         <CameraView
           ref={cameraRef}
           style={styles.camera}
           facing="front"
         />
-        <View style={[styles.overlay, { backgroundColor: isInPosition ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)' }]}>
-          {!exerciseComplete ? (
+        <View style={[styles.overlay, { backgroundColor: breathingPhase ? 'rgba(33, 150, 243, 0.4)' : (isInPosition ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)') }]}>
+          {breathingPhase ? (
+            <>
+              <Text style={styles.breathingText}>Take a deep breath...</Text>
+              <Text style={styles.breathingEmoji}>🧘</Text>
+              <Text style={styles.breathCountdownText}>{breathCountdown}</Text>
+              <Text style={styles.breathingSubtext}>Relax and prepare for your stretch</Text>
+            </>
+          ) : !exerciseComplete ? (
             <>
               <Text style={styles.statusText}>
                 {isInPosition ? 'Perfect! Hold this position' : 'Adjust your position'}
@@ -198,6 +217,38 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
+  },
+  breathingText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+    paddingHorizontal: 20,
+  },
+  breathingEmoji: {
+    fontSize: 64,
+    marginVertical: 20,
+  },
+  breathCountdownText: {
+    fontSize: 80,
+    fontWeight: 'bold',
+    color: 'white',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  breathingSubtext: {
+    fontSize: 16,
+    color: 'white',
+    textAlign: 'center',
+    marginTop: 15,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+    paddingHorizontal: 30,
   },
   loader: {
     marginTop: 20,
