@@ -11,6 +11,8 @@
   "dependencies": {
     "@google-cloud/vision": "^5.3.4",
     "@google/generative-ai": "^0.24.1",
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-community/slider": "^5.1.1",
     "@react-navigation/bottom-tabs": "^7.8.6",
     "@react-navigation/native": "^7.1.21",
     "@react-navigation/stack": "^7.6.7",

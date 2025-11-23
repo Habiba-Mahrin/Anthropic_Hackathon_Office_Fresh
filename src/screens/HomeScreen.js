@@ -1,15 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../utils/theme';
+import { getStats } from '../services/stretchDatabase';
 
 export default function HomeScreen({ navigation }) {
   const [isEnabled, setIsEnabled] = useState(false);
   const [interval, setInterval] = useState(30);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     requestPermissions();
+    loadStats();
   }, []);
+
+  useEffect(() => {
+    // Reload stats when navigating back to this screen
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadStats();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  const loadStats = async () => {
+    const data = await getStats();
+    setStats(data);
+  };
 
   const requestPermissions = async () => {
     const { status } = await Notifications.requestPermissionsAsync();
@@ -42,12 +59,36 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.greeting}>Hi there,</Text>
         <Text style={styles.title}>Ready to Refresh?</Text>
         <Text style={styles.subtitle}>Take care of your body with mindful stretches</Text>
       </View>
+
+      {/* Stats Card */}
+      {stats && stats.totalSessions > 0 && (
+        <View style={styles.statsCard}>
+          <Text style={styles.statsTitle}>Your Progress</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <MaterialCommunityIcons name="check-circle" size={24} color={colors.success} />
+              <Text style={styles.statNumber}>{stats.totalSessions}</Text>
+              <Text style={styles.statLabel}>Sessions</Text>
+            </View>
+            <View style={styles.statItem}>
+              <MaterialCommunityIcons name="fire" size={24} color={colors.warning} />
+              <Text style={styles.statNumber}>{stats.streak}</Text>
+              <Text style={styles.statLabel}>Day Streak</Text>
+            </View>
+            <View style={styles.statItem}>
+              <MaterialCommunityIcons name="emoticon-happy" size={24} color={colors.primary} />
+              <Text style={styles.statNumber}>{stats.averageFeeling}%</Text>
+              <Text style={styles.statLabel}>Avg. Feeling</Text>
+            </View>
+          </View>
+        </View>
+      )}
 
       <View style={styles.card}>
         <View style={styles.cardHeader}>
@@ -116,7 +157,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -270,5 +311,37 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSizes.sm,
     color: colors.textSecondary,
     lineHeight: 20,
+  },
+  statsCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    ...shadows.md,
+  },
+  statsTitle: {
+    fontSize: typography.fontSizes.lg,
+    fontWeight: typography.fontWeights.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: typography.fontSizes['2xl'],
+    fontWeight: typography.fontWeights.bold,
+    color: colors.textPrimary,
+    marginTop: spacing.xs,
+  },
+  statLabel: {
+    fontSize: typography.fontSizes.sm,
+    color: colors.textSecondary,
+    marginTop: spacing.xs / 2,
   },
 });

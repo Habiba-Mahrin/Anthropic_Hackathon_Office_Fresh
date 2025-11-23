@@ -106,26 +106,26 @@ function analyzePoseFromVision(labels, faces, exerciseName) {
       console.log('Head tilt angle detected:', rollAngle.toFixed(2), 'degrees');
 
       // For a right neck stretch, we expect a right tilt (negative roll angle)
-      // Made more lenient: accepts any tilt between -5 to -50 degrees
-      if (rollAngle < -5 && rollAngle > -50) {
+      // Very lenient: accepts any tilt greater than 10 degrees
+      const absAngle = Math.abs(rollAngle);
+
+      if (rollAngle < 0 && absAngle >= 10) {
+        // Tilting to the right (negative angle) with at least 10 degrees
         return {
           isCorrect: true,
-          feedback: `Great form! Keep holding this position. (Tilt: ${Math.abs(rollAngle.toFixed(0))}°)`,
+          feedback: `Great form! Keep holding this position. (Tilt: ${absAngle.toFixed(0)}°)`,
         };
-      } else if (rollAngle > 5 && rollAngle < 50) {
+      } else if (rollAngle > 10) {
+        // Tilting to the left (wrong direction)
         return {
           isCorrect: false,
           feedback: `You are tilting to the left. Please tilt your head to the right. (Current: ${rollAngle.toFixed(0)}°)`,
         };
-      } else if (rollAngle >= -5 && rollAngle <= 5) {
-        return {
-          isCorrect: false,
-          feedback: `Please tilt your head to the right. (Current: ${rollAngle.toFixed(0)}°)`,
-        };
       } else {
+        // Not tilting enough
         return {
           isCorrect: false,
-          feedback: `Adjust your head position - try a gentler tilt. (Current: ${rollAngle.toFixed(0)}°)`,
+          feedback: `Please tilt your head more to the right. Need at least 10° (Current: ${absAngle.toFixed(0)}°)`,
         };
       }
     }

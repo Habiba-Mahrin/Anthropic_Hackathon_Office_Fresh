@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import Slider from '@react-native-community/slider';
 import { analyzePose } from '../utils/visionService';
+import { saveStretchSession } from '../services/stretchDatabase';
 
 const { width, height } = Dimensions.get('window');
 
@@ -12,8 +14,11 @@ export default function StretchScreen({ navigation }) {
   const [isInPosition, setIsInPosition] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [exerciseComplete, setExerciseComplete] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feeling, setFeeling] = useState(50);
   const [feedback, setFeedback] = useState('Position yourself for the stretch');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const cameraRef = useRef(null);
   const analysisInterval = useRef(null);
 
@@ -70,7 +75,7 @@ export default function StretchScreen({ navigation }) {
         quality: 0.5,
       });
 
-      // Analyze with Gemini
+      // Analyze with Vision API
       const result = await analyzePose(photo.base64, 'Neck Stretch');
 
       setFeedback(result.feedback);
@@ -89,6 +94,25 @@ export default function StretchScreen({ navigation }) {
       setFeedback('Error analyzing pose. Please try again.');
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleSaveSession = async () => {
+    try {
+      setIsSaving(true);
+      await saveStretchSession({
+        exerciseName: 'Neck Stretch',
+        duration: 5,
+        feeling: Math.round(feeling),
+        timestamp: new Date().toISOString(),
+      });
+      setShowFeedback(false);
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error saving session:', error);
+      alert('Failed to save session');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -157,13 +181,57 @@ export default function StretchScreen({ navigation }) {
         <Text style={styles.aiNote}>AI is watching your form every 3 seconds</Text>
       </View>
 
-      {exerciseComplete && (
+      {exerciseComplete && !showFeedback && (
         <TouchableOpacity
           style={styles.doneButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => setShowFeedback(true)}
         >
-          <Text style={styles.buttonText}>Done</Text>
+          <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
+      )}
+
+      {exerciseComplete && showFeedback && (
+        <View style={styles.feedbackContainer}>
+          <Text style={styles.feedbackTitle}>How do you feel?</Text>
+          <Text style={styles.feedbackSubtitle}>Rate your feeling after the stretch</Text>
+
+          <View style={styles.sliderContainer}>
+            <View style={styles.emojiRow}>
+              <Text style={styles.emoji}>😫</Text>
+              <Text style={styles.emoji}>😐</Text>
+              <Text style={styles.emoji}>😊</Text>
+              <Text style={styles.emoji}>😄</Text>
+              <Text style={styles.emoji}>🤩</Text>
+            </View>
+
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={100}
+              value={feeling}
+              onValueChange={setFeeling}
+              minimumTrackTintColor="#4CAF50"
+              maximumTrackTintColor="#E0E0E0"
+              thumbTintColor="#2196F3"
+            />
+
+            <Text style={styles.feelingText}>
+              {feeling < 20 ? 'Not great' : feeling < 40 ? 'Could be better' : feeling < 60 ? 'Okay' : feeling < 80 ? 'Good' : 'Excellent!'}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.doneButton, isSaving && styles.disabledButton]}
+            onPress={handleSaveSession}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText}>Save & Finish</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
@@ -330,5 +398,56 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: 'center',
     marginHorizontal: 20,
+  },
+  feedbackContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  feedbackTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  feedbackSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  sliderContainer: {
+    marginBottom: 24,
+  },
+  emojiRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  emoji: {
+    fontSize: 28,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  feelingText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2196F3',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  disabledButton: {
+    backgroundColor: '#BDBDBD',
   },
 });
