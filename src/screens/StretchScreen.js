@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { analyzePose } from '../utils/geminiService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -9,7 +10,10 @@ export default function StretchScreen({ navigation }) {
   const [isInPosition, setIsInPosition] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [exerciseComplete, setExerciseComplete] = useState(false);
+  const [feedback, setFeedback] = useState('Position yourself for the stretch');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const cameraRef = useRef(null);
+  const analysisInterval = useRef(null);
 
   useEffect(() => {
     if (isInPosition && countdown > 0) {
@@ -17,15 +21,62 @@ export default function StretchScreen({ navigation }) {
       return () => clearTimeout(timer);
     } else if (isInPosition && countdown === 0) {
       setExerciseComplete(true);
+      stopAnalysis();
     }
   }, [isInPosition, countdown]);
 
-  const simulatePositionDetection = () => {
-    // This is a placeholder - in production, this would use pose detection
-    setIsInPosition(!isInPosition);
-    if (!isInPosition) {
-      setCountdown(5);
-      setExerciseComplete(false);
+  useEffect(() => {
+    if (permission?.granted && !exerciseComplete) {
+      startAnalysis();
+    }
+    return () => stopAnalysis();
+  }, [permission, exerciseComplete]);
+
+  const startAnalysis = () => {
+    // Analyze every 3 seconds
+    analysisInterval.current = setInterval(async () => {
+      await captureAndAnalyze();
+    }, 3000);
+  };
+
+  const stopAnalysis = () => {
+    if (analysisInterval.current) {
+      clearInterval(analysisInterval.current);
+      analysisInterval.current = null;
+    }
+  };
+
+  const captureAndAnalyze = async () => {
+    if (!cameraRef.current || isAnalyzing || exerciseComplete) return;
+
+    try {
+      setIsAnalyzing(true);
+
+      // Take a picture
+      const photo = await cameraRef.current.takePictureAsync({
+        base64: true,
+        quality: 0.5,
+      });
+
+      // Analyze with Gemini
+      const result = await analyzePose(photo.base64, 'Neck Stretch');
+
+      setFeedback(result.feedback);
+
+      if (result.isCorrect && !isInPosition) {
+        // Just became correct
+        setIsInPosition(true);
+        setCountdown(5);
+      } else if (!result.isCorrect && isInPosition) {
+        // Lost correct position
+        setIsInPosition(false);
+        setCountdown(5);
+      }
+    } catch (error) {
+      console.error('Error analyzing pose:', error);
+      setFeedback('Error analyzing pose. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -59,10 +110,13 @@ export default function StretchScreen({ navigation }) {
           {!exerciseComplete ? (
             <>
               <Text style={styles.statusText}>
-                {isInPosition ? 'Great! Hold this position' : 'Adjust your position'}
+                {isInPosition ? 'Perfect! Hold this position' : 'Adjust your position'}
               </Text>
               {isInPosition && (
                 <Text style={styles.countdownText}>{countdown}</Text>
+              )}
+              {isAnalyzing && !isInPosition && (
+                <ActivityIndicator size="large" color="white" style={styles.loader} />
               )}
             </>
           ) : (
@@ -71,32 +125,27 @@ export default function StretchScreen({ navigation }) {
         </View>
       </View>
 
+      <View style={styles.feedbackCard}>
+        <Text style={styles.feedbackLabel}>AI Feedback:</Text>
+        <Text style={styles.feedbackText}>{feedback}</Text>
+      </View>
+
       <View style={styles.instructionCard}>
         <Text style={styles.exerciseTitle}>Neck Stretch</Text>
         <Text style={styles.instruction}>1. Sit up straight</Text>
         <Text style={styles.instruction}>2. Slowly tilt your head to the right</Text>
         <Text style={styles.instruction}>3. Hold until the screen turns green</Text>
+        <Text style={styles.aiNote}>AI is watching your form every 3 seconds</Text>
       </View>
 
-      <View style={styles.buttonContainer}>
+      {exerciseComplete && (
         <TouchableOpacity
-          style={[styles.testButton, { backgroundColor: isInPosition ? '#f44336' : '#4CAF50' }]}
-          onPress={simulatePositionDetection}
+          style={styles.doneButton}
+          onPress={() => navigation.goBack()}
         >
-          <Text style={styles.buttonText}>
-            {isInPosition ? 'Break Position' : 'Get in Position'}
-          </Text>
+          <Text style={styles.buttonText}>Done</Text>
         </TouchableOpacity>
-
-        {exerciseComplete && (
-          <TouchableOpacity
-            style={styles.doneButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.buttonText}>Done</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      )}
     </View>
   );
 }
@@ -131,6 +180,7 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
+    paddingHorizontal: 20,
   },
   countdownText: {
     fontSize: 72,
@@ -149,12 +199,37 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
   },
+  loader: {
+    marginTop: 20,
+  },
+  feedbackCard: {
+    backgroundColor: '#e3f2fd',
+    borderRadius: 15,
+    padding: 15,
+    margin: 20,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  feedbackLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1976D2',
+    marginBottom: 5,
+  },
+  feedbackText: {
+    fontSize: 16,
+    color: '#333',
+  },
   instructionCard: {
     backgroundColor: 'white',
     borderRadius: 15,
     padding: 20,
-    margin: 20,
-    marginTop: 30,
+    marginHorizontal: 20,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -172,20 +247,19 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 8,
   },
-  buttonContainer: {
-    padding: 20,
-  },
-  testButton: {
-    borderRadius: 25,
-    padding: 18,
-    alignItems: 'center',
-    marginBottom: 10,
+  aiNote: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 10,
   },
   doneButton: {
     backgroundColor: '#2196F3',
     borderRadius: 25,
     padding: 18,
     alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 20,
   },
   buttonText: {
     color: 'white',
@@ -197,6 +271,7 @@ const styles = StyleSheet.create({
     color: '#f44336',
     textAlign: 'center',
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   button: {
     backgroundColor: '#2196F3',
