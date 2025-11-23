@@ -1,19 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { Camera } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 
 const { width, height } = Dimensions.get('window');
 
 export default function StretchScreen({ navigation }) {
-  const [hasPermission, setHasPermission] = useState(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [isInPosition, setIsInPosition] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [exerciseComplete, setExerciseComplete] = useState(false);
   const cameraRef = useRef(null);
-
-  useEffect(() => {
-    requestCameraPermission();
-  }, []);
 
   useEffect(() => {
     if (isInPosition && countdown > 0) {
@@ -24,11 +20,6 @@ export default function StretchScreen({ navigation }) {
     }
   }, [isInPosition, countdown]);
 
-  const requestCameraPermission = async () => {
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    setHasPermission(status === 'granted');
-  };
-
   const simulatePositionDetection = () => {
     // This is a placeholder - in production, this would use pose detection
     setIsInPosition(!isInPosition);
@@ -38,15 +29,18 @@ export default function StretchScreen({ navigation }) {
     }
   };
 
-  if (hasPermission === null) {
+  if (!permission) {
     return <View style={styles.container}><Text>Requesting camera permission...</Text></View>;
   }
 
-  if (hasPermission === false) {
+  if (!permission.granted) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>Camera access is required for pose detection</Text>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.button} onPress={requestPermission}>
+          <Text style={styles.buttonText}>Grant Permission</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, { backgroundColor: '#666', marginTop: 10 }]} onPress={() => navigation.goBack()}>
           <Text style={styles.buttonText}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -56,10 +50,10 @@ export default function StretchScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={[styles.cameraContainer, { borderColor: isInPosition ? '#4CAF50' : '#f44336' }]}>
-        <Camera
+        <CameraView
           ref={cameraRef}
           style={styles.camera}
-          type={Camera.Constants.Type.front}
+          facing="front"
         />
         <View style={[styles.overlay, { backgroundColor: isInPosition ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)' }]}>
           {!exerciseComplete ? (
