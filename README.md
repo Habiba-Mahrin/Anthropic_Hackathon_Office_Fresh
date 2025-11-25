@@ -1,10 +1,10 @@
-# 📘 Office Refresh  
+#  Office Refresh  
 ### *AI-Powered Burnout & Office Syndrome Prevention App*  
 Built with **React.js**, **Claude (Anthropic)**, **Google Gemini**, and **Google Cloud Vision**
 
 ---
 
-## 📖 Introduction
+##  Introduction
 
 **Office Refresh** is an AI-driven wellness application designed for office workers, students, and remote professionals who spend long hours sitting.  
 The app blends **science-based micro-break reminders**, **guided stretching**, **AI emotional support**, and **real-time posture detection** to prevent:
@@ -20,11 +20,11 @@ The mission is simple: create a healthier and more productive work-life routine.
 
 ---
 
-# 🌟 Key Features
+#  Key Features
 
 ---
 
-## ⏱️ 1. Smart Break Reminders
+##  1. Smart Break Reminders
 - Micro-break suggestions every 30–60 minutes  
 - Uses **Ultradian Rhythm** productivity cycles  
 - Syncs with user’s calendar (avoids meetings)  
@@ -32,7 +32,7 @@ The mission is simple: create a healthier and more productive work-life routine.
 
 ---
 
-## 🤸 2. Guided Stretching + Gamification
+##  2. Guided Stretching + Gamification
 - Animated stretch routines (neck, shoulders, back, wrists)  
 - Gamified scoring + habit streaks  
 - Breathing phase before exercises  
@@ -42,7 +42,7 @@ The mission is simple: create a healthier and more productive work-life routine.
 
 ---
 
-## 🧠 3. Emotional Support AI Companion (Claude)
+##  3. Emotional Support AI Companion (Claude)
 - 24/7 conversational companion  
 - Sentiment & stress detection  
 - Personalized wellness recommendations  
@@ -51,7 +51,7 @@ The mission is simple: create a healthier and more productive work-life routine.
 
 ---
 
-## 📸 4. AI Pose Detection + Google Cloud Vision
+##  4. AI Pose Detection + Google Cloud Vision
 Powered by:  
 - **Gemini Flash**  
 - **Gemini Vision**  
@@ -65,7 +65,7 @@ Features include:
 
 ---
 
-## 📊 5. Session Tracking + Feedback Slider
+##  5. Session Tracking + Feedback Slider
 - Track duration of stretching sessions  
 - Mood tracking (before/after)  
 - Feedback slider  
@@ -74,21 +74,21 @@ Features include:
 
 ---
 
-# 🧠 Tech Stack
+# Tech Stack
 
 ---
 
-## 🎨 Frontend
+## Frontend
 - React.js  
 - TailwindCSS  
 - Redux Toolkit  
 
-## 🔮 AI Models
+##  AI Models
 - **Claude (Anthropic)** → Emotional support  
 - **Gemini Vision / Flash** → Pose detection  
 - **Google Cloud Vision API** → Image understanding  
 
-## 🛠 Backend & Services
+##  Backend & Services
 - Node.js  
 - Google Cloud Functions  
 - Firebase (optional)  
